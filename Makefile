@@ -53,3 +53,6 @@ pypi_test:
 
 pypi:
 	@twine upload dist/* -u $(PYPI_USERNAME)
+
+run_test_flightaware:
+	python -c 'from delai.api.flightaware import test_flightaware_functions; test_flightaware_functions()'
