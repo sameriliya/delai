@@ -138,5 +138,5 @@ def get_processed_flight_details(flight_number='UAL4', date=datetime.date.today(
 
 def test_flightaware_functions():
     '''Helper function for makefile'''
-    df = get_processed_flight_details('UAL4',datetime.date.today())
+    df = get_processed_flight_details()
     print(df)
