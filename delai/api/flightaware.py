@@ -5,9 +5,9 @@ import datetime
 import os
 from dateutil import tz
 
-def get_raw_flight_details(flight_number, date):
+def get_raw_flight_details(flight_number='UAL4', date=datetime.date.today()):
     '''Enter a flight number e.g UAL4, and a date of travel and return a json blob
-    containing flight details.
+    containing flight details from the FlightAware API.
     The data will be raw and in need of post processing using other functions.
     '''
     AEROAPI_BASE_URL = "https://aeroapi.flightaware.com/aeroapi/flights/"
@@ -124,7 +124,10 @@ def clean_df(df):
     return df_out
 
 
-def get_processed_flight_details(flight_number, date):
+def get_processed_flight_details(flight_number='UAL4', date=datetime.date.today()):
+    '''Given a flight number and date of travel, use functions to
+    return a cleaned dataframe of flight details to pass into an ML model
+    '''
     raw_details = get_raw_flight_details(flight_number, date)
     if raw_details == 'Bad API response':
         print('There has been an issue connecting to the Flightaware API')
