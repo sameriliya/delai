@@ -11,9 +11,7 @@ from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import FunctionTransformer, OneHotEncoder
 from sklearn.pipeline import make_union
 
-def preprocess_X():
-    df_X = pd.read_csv()
-
+def preprocess_X(df_X):
 # Dropping columns
     try:
         df_X = df_X.drop(columns = ['Unnamed: 0','Airline','Operating_Airline', 'Flight_Number_Marketing_Airline',
@@ -91,3 +89,21 @@ def preprocess_X():
 
 
 print("✅ preprocess_X() done")
+
+
+
+
+def preprocessing_y(y):
+    y["DelayGroup"] = None
+    y.loc[y["ArrDelayMinutes"] == 0, "DelayGroup"] = "OnTime_Early"
+    y.loc[(y["ArrDelayMinutes"] > 0) & (y["ArrDelayMinutes"] <= 30), "DelayGroup"] = "Small_Delay"
+    y.loc[y["ArrDelayMinutes"] > 30, "DelayGroup"] = "Large_Delay"
+
+    y.loc[y["Cancelled"], "DelayGroup"] = "NoArrival"
+    y.loc[y["Diverted"], "DelayGroup"] = "NoArrival"
+
+    y = y.drop(columns = ['ArrDelayMinutes', 'Cancelled', 'Diverted', 'Unnamed: 0'])
+
+    return y
+
+print("✅ preprocess_y() done")
