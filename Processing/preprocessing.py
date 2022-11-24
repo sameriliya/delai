@@ -11,63 +11,51 @@ from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import FunctionTransformer, OneHotEncoder
 from sklearn.pipeline import make_union
 
+def preprocess_X():
+    df_X = pd.read_csv()
 
 # Dropping columns
-
-def data_cleaning(X):
     try:
-        X = X.drop(columns = ['Unnamed: 0','Airline','Operating_Airline', 'Flight_Number_Marketing_Airline',
+        df_X = df_X.drop(columns = ['Unnamed: 0','Airline','Operating_Airline', 'Flight_Number_Marketing_Airline',
               'OriginStateName', 'OriginCityName','DestStateName', 'DestCityName', 'DestAirportID', 'OriginAirportID'])
-        X = X.drop_duplicates()
+        df_X = df_X.drop_duplicates()
 
     except:pass
 
-    return X
-
-
 # Scalling distances
 
-def distance_scalling(X):
-    dist_min = X['Distance'].min()
-    dist_max = X['Distance'].max()
+    dist_min = df_X['Distance'].min()
+    dist_max = df_X['Distance'].max()
 
     distance_pipe = make_pipeline(FunctionTransformer(lambda dist: (dist - dist_min)/(dist_max - dist_min)))
 
-    return distance_pipe
-
-
 # Formatting and Scalling time
 
-def time_format(X):
-    X['FlightDate'] = pd.to_datetime(X["FlightDate"])
-    X['FlightDate'].dt.dayofweek
-    X['FlightDate'].dt.dayofweek
-
-    return (X['FlightDate'].dt.dayofweek) + 1
+    df_X['FlightDate'] = pd.to_datetime(df_X["FlightDate"])
+    df_X['FlightDate'] = df_X['FlightDate'].dt.dayofweek + 1
 
 
-def transform_time_features(X: pd.DataFrame):
-    dow = X['DayOfWeek']
+    dow = df_X['DayOfWeek']
     sin_dow = np.sin(2 * math.pi / 7 * dow)
     cos_dow = np.cos(2 * math.pi / 7 * dow)
 
-    dom = X['DayofMonth']
+    dom = df_X['DayofMonth']
     sin_dom = np.sin(2 * math.pi / 31 * dom)
     cos_dom = np.cos(2 * math.pi / 31 * dom)
 
-    month = X['Month']
+    month = df_X['Month']
     sin_month = np.sin(2 * math.pi / 12 * month)
     cos_month = np.cos(2 * math.pi / 12 * month)
 
-    qua = X['Quarter']
+    qua = df_X['Quarter']
     sin_qua = np.sin(2 * math.pi / 4 * qua)
     cos_qua = np.cos(2 * math.pi / 4 * qua)
 
-    dep = X['CRSDepTime']
+    dep = df_X['CRSDepTime']
     sin_dep = np.sin(2 * math.pi / 2400 * qua)
     cos_dep = np.cos(2 * math.pi / 2400 * qua)
 
-    arr = X['CRSArrTime']
+    arr = df_X['CRSArrTime']
     sin_arr = np.sin(2 * math.pi / 2400 * qua)
     cos_arr = np.cos(2 * math.pi / 2400 * qua)
 
@@ -76,16 +64,30 @@ def transform_time_features(X: pd.DataFrame):
                       cos_dep, sin_arr, cos_arr]).T
     result.columns = ['sin_dow','cos_dow','sin_dom', 'cos_dom', 'sin_month', 'cos_month', 'sin_qua', 'cos_qua', 'sin_dep',
                       'cos_dep', 'sin_arr', 'cos_arr']
-
-    return result
+    df_time = pd.DataFrame(result, columns=result.columns)
 
 
 # Creating a joined df
 
-def updated_df(X):
-    df_time = transform_time_features(X)
     df_X = pd.merge(df_X, df_time, left_index=True, right_index=True, how = 'outer')
     df_X = df_X.drop(columns = ['Unnamed: 0'])
 
 
 # Encoding categorical values
+
+    cat_transformer = OneHotEncoder(handle_unknown='ignore', sparse=False)
+
+    cat_pipeline = make_column_transformer(
+    (cat_transformer, df_X['Marketing_Airline_Network', 'Origin', 'Dest', 'Year']),
+    remainder='passthrough')
+    preprocessor = ColumnTransformer([("dist_preproc", distance_pipe, ['Distance']),],)
+
+
+# Creating the full pipeline
+    preproc_full = make_union(preprocessor, cat_pipeline)
+    X_processed = pd.DataFrame(preproc_full.fit_transform(df_X))
+
+    return X_processed
+
+
+print("✅ preprocess_X() done")
