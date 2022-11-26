@@ -8,7 +8,7 @@ import math
 
 from sklearn.compose import ColumnTransformer, make_column_transformer
 from sklearn.pipeline import make_pipeline
-from sklearn.preprocessing import FunctionTransformer, OneHotEncoder
+from sklearn.preprocessing import FunctionTransformer, OneHotEncoder, LabelEncoder
 from sklearn.pipeline import make_union
 
 def preprocess_X(df_X):
@@ -18,7 +18,8 @@ def preprocess_X(df_X):
               'OriginStateName', 'OriginCityName','DestStateName', 'DestCityName', 'DestAirportID', 'OriginAirportID'])
         df_X = df_X.drop_duplicates()
 
-    except:pass
+    except:
+        print("Columns don't match input data. Not sure what to clean!")
 
 # Scalling distances
 
@@ -29,9 +30,8 @@ def preprocess_X(df_X):
 
 # Formatting and Scalling time
 
-    df_X['FlightDate'] = pd.to_datetime(df_X["FlightDate"])
-    df_X['FlightDate'] = df_X['FlightDate'].dt.dayofweek + 1
-
+    # df_X['FlightDate'] = pd.to_datetime(df_X["FlightDate"])
+    # df_X['FlightDate'] = df_X['FlightDate'].dt.dayofweek + 1
 
     dow = df_X['DayOfWeek']
     sin_dow = np.sin(2 * math.pi / 7 * dow)
@@ -64,19 +64,16 @@ def preprocess_X(df_X):
                       'cos_dep', 'sin_arr', 'cos_arr']
     df_time = pd.DataFrame(result, columns=result.columns)
 
-
 # Creating a joined df
 
     df_X = pd.merge(df_X, df_time, left_index=True, right_index=True, how = 'outer')
-    df_X = df_X.drop(columns = ['Unnamed: 0'])
-
 
 # Encoding categorical values
 
     cat_transformer = OneHotEncoder(handle_unknown='ignore', sparse=False)
-
+# print(df_X['Marketing_Airline_Network', 'Origin', 'Dest', 'Year'])
     cat_pipeline = make_column_transformer(
-    (cat_transformer, df_X['Marketing_Airline_Network', 'Origin', 'Dest', 'Year']),
+    (cat_transformer, ['Marketing_Airline_Network', 'Origin', 'Dest', 'Year']),
     remainder='passthrough')
     preprocessor = ColumnTransformer([("dist_preproc", distance_pipe, ['Distance']),],)
 
@@ -84,16 +81,12 @@ def preprocess_X(df_X):
 # Creating the full pipeline
     preproc_full = make_union(preprocessor, cat_pipeline)
     X_processed = pd.DataFrame(preproc_full.fit_transform(df_X))
-
+    print("✅ preprocess_X() done")
     return X_processed
 
 
-print("✅ preprocess_X() done")
 
-
-
-
-def preprocessing_y(y):
+def preprocess_y(y):
     y["DelayGroup"] = None
     y.loc[y["ArrDelayMinutes"] == 0, "DelayGroup"] = "OnTime_Early"
     y.loc[(y["ArrDelayMinutes"] > 0) & (y["ArrDelayMinutes"] <= 30), "DelayGroup"] = "Small_Delay"
@@ -104,6 +97,9 @@ def preprocessing_y(y):
 
     y = y.drop(columns = ['ArrDelayMinutes', 'Cancelled', 'Diverted', 'Unnamed: 0'])
 
-    return y
+    label_encoder = LabelEncoder()
 
-print("✅ preprocess_y() done")
+    encoded_target = label_encoder.fit_transform(y['DelayGroup'])
+
+    print("✅ preprocess_y() done")
+    return encoded_target
