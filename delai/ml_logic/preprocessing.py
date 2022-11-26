@@ -15,7 +15,7 @@ def preprocess_X(df_X):
 # Dropping columns
     try:
         df_X = df_X.drop(columns = ['Unnamed: 0','Airline','Operating_Airline', 'Flight_Number_Marketing_Airline',
-              'OriginStateName', 'OriginCityName','DestStateName', 'DestCityName', 'DestAirportID', 'OriginAirportID'])
+              'OriginStateName', 'OriginCityName','DestStateName', 'DestCityName', 'DestAirportID', 'OriginAirportID', 'FlightDate'])
         df_X = df_X.drop_duplicates()
 
     except:
@@ -63,6 +63,8 @@ def preprocess_X(df_X):
     result.columns = ['sin_dow','cos_dow','sin_dom', 'cos_dom', 'sin_month', 'cos_month', 'sin_qua', 'cos_qua', 'sin_dep',
                       'cos_dep', 'sin_arr', 'cos_arr']
     df_time = pd.DataFrame(result, columns=result.columns)
+
+    df_X = df_X.drop(columns = ['DayOfWeek', 'DayofMonth', 'Month', 'Quarter', 'CRSDepTime', 'CRSArrTime'])
 
 # Creating a joined df
 
