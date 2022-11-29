@@ -12,5 +12,5 @@ if __name__ == '__main__':
     print(output.head())
 
     df_y = get_pandas_chunk('initial_y_train')
-    y_output = preprocess_y(df_y)
+    y_output = preprocess_y(df_y, is_binary = True)
     print(y_output)
