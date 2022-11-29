@@ -88,20 +88,31 @@ def preprocess_X(df_X):
 
 
 
-def preprocess_y(y):
-    y["DelayGroup"] = None
-    y.loc[y["ArrDelayMinutes"] == 0, "DelayGroup"] = "OnTime_Early"
-    y.loc[(y["ArrDelayMinutes"] > 0) & (y["ArrDelayMinutes"] <= 30), "DelayGroup"] = "Small_Delay"
-    y.loc[y["ArrDelayMinutes"] > 30, "DelayGroup"] = "Large_Delay"
+def preprocess_y(y, is_binary=True):
 
-    y.loc[y["Cancelled"], "DelayGroup"] = "NoArrival"
-    y.loc[y["Diverted"], "DelayGroup"] = "NoArrival"
+    y["DelayGroup"] = None
+
+    if is_binary:
+        y.loc[y["ArrDelayMinutes"] == 0, "DelayGroup"] = "InsigDelay"
+        y.loc[(y["ArrDelayMinutes"] > 0) & (y["ArrDelayMinutes"] <= 30), "DelayGroup"] = "InsigDelay"
+        y.loc[y["ArrDelayMinutes"] > 30, "DelayGroup"] = "Delayed"
+        y.loc[y["Cancelled"], "DelayGroup"] = "Delayed"
+        y.loc[y["Diverted"], "DelayGroup"] = "Delayed"
+
+    if not is_binary:
+        y.loc[y["ArrDelayMinutes"] == 0, "DelayGroup"] = "OnTime_Early"
+        y.loc[(y["ArrDelayMinutes"] > 0) & (y["ArrDelayMinutes"] <= 30), "DelayGroup"] = "Small_Delay"
+        y.loc[y["ArrDelayMinutes"] > 30, "DelayGroup"] = "Large_Delay"
+
+        y.loc[y["Cancelled"], "DelayGroup"] = "NoArrival"
+        y.loc[y["Diverted"], "DelayGroup"] = "NoArrival"
 
     y = y.drop(columns = ['ArrDelayMinutes', 'Cancelled', 'Diverted', 'Unnamed: 0'])
-
     label_encoder = LabelEncoder()
-
     encoded_target = label_encoder.fit_transform(y['DelayGroup'])
 
-    print("✅ preprocess_y() done")
+    if is_binary:
+        print("✅ BINARY preprocess_y() done")
+    if not is_binary:
+        print("✅ STANDARD preprocess_y() done")
     return encoded_target
