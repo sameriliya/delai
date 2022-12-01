@@ -21,7 +21,7 @@ def train_model(model, X, y,
     IF USING DL, update to:
     Fit model and return a the tuple (fitted_model, history)
     """
-    fitted_model = model.partial_fit(X,y)
+    fitted_model = model.fit(X,y)
     return fitted_model
 
 def evaluate_model(model, X_val, y_val):
@@ -29,3 +29,7 @@ def evaluate_model(model, X_val, y_val):
     '''
 
     pass
+
+def test_model_run(X, y):
+    model = initialize_model()
+    return train_model(model, X, y)
