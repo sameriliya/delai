@@ -6,6 +6,7 @@ from delai.ml_logic.model import test_model_run
 from delai.ml_logic.preprocessing import split_X_y, preprocess_X, preprocess_y
 from delai.ml_logic.params import (CHUNK_SIZE)
 from delai.data.big_query import get_bq_chunk
+from delai.api.flightaware import get_processed_flight_details
 import pandas as pd
 
 if __name__ == '__main__':
@@ -23,6 +24,7 @@ if __name__ == '__main__':
     bq_df = get_bq_chunk(table = 'train_100k', index = 0, chunk_size = 1000)
     print(bq_df.dtypes)
     bq_df_X, bq_df_y = split_X_y(bq_df)
+    print(bq_df_X)
 
     bqX_output = preprocess_X(bq_df_X)
     print(bqX_output.head())
@@ -32,3 +34,9 @@ if __name__ == '__main__':
 
     model = test_model_run(bqX_output,bqy_output)
     print('Model has been fitted successfully')
+
+    X_new = get_processed_flight_details()
+    print(X_new)
+    # X_new = preprocess_X(X_new)
+    # print('processed sample flight')
+    # print(model.predict(X_new))

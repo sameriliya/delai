@@ -124,7 +124,7 @@ def clean_df(df):
     return df_out
 
 
-def get_processed_flight_details(flight_number='UAL4', date=datetime.date.today()):
+def get_processed_flight_details(flight_number='UAL3519', date=datetime.date.today()):
     '''Given a flight number and date of travel, use functions to
     return a cleaned dataframe of flight details to pass into an ML model
     '''
