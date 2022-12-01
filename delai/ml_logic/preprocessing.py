@@ -11,6 +11,11 @@ from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import FunctionTransformer, OneHotEncoder, LabelEncoder
 from sklearn.pipeline import make_union
 
+def split_X_y(df):
+    df_X = df.drop(columns = ['ArrDelayMinutes','Cancelled','Diverted'])
+    df_y = df[['Unnamed: 0','ArrDelayMinutes','Cancelled','Diverted']]
+    return df_X, df_y
+
 def preprocess_X(df_X):
 # Dropping columns
     try:
@@ -91,7 +96,7 @@ def preprocess_X(df_X):
 
 
 def preprocess_y(y, is_binary=True):
-
+    y = y.copy()
     y["DelayGroup"] = None
 
     if is_binary:
