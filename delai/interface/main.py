@@ -11,7 +11,6 @@ if __name__ == '__main__':
     print(df.head().dtypes)
     df_X, df_y = split_X_y(df)
 
-
     X_output = preprocess_X(df_X)
     print(X_output.head())
 
