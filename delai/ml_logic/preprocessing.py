@@ -28,6 +28,7 @@ def preprocess_X(df_X):
 
     distance_pipe = make_pipeline(FunctionTransformer(lambda dist: (dist - dist_min)/(dist_max - dist_min)))
 
+
 # Formatting and Scalling time
 
     # df_X['FlightDate'] = pd.to_datetime(df_X["FlightDate"])
@@ -50,12 +51,12 @@ def preprocess_X(df_X):
     cos_qua = np.cos(2 * math.pi / 4 * qua)
 
     dep = df_X['CRSDepTime']
-    sin_dep = np.sin(2 * math.pi / 2400 * qua)
-    cos_dep = np.cos(2 * math.pi / 2400 * qua)
+    sin_dep = np.sin(2 * math.pi / 2400 * dep)
+    cos_dep = np.cos(2 * math.pi / 2400 * dep)
 
     arr = df_X['CRSArrTime']
-    sin_arr = np.sin(2 * math.pi / 2400 * qua)
-    cos_arr = np.cos(2 * math.pi / 2400 * qua)
+    sin_arr = np.sin(2 * math.pi / 2400 * arr)
+    cos_arr = np.cos(2 * math.pi / 2400 * arr)
 
     #return np.stack([sin_dow,cos_dow, sin_dom, cos_dom, sin_month, cos_month, sin_qua, cos_qua])
     result = pd.DataFrame([sin_dow,cos_dow,sin_dom, cos_dom, sin_month, cos_month, sin_qua, cos_qua, sin_dep,
@@ -76,13 +77,14 @@ def preprocess_X(df_X):
 # print(df_X['Marketing_Airline_Network', 'Origin', 'Dest', 'Year'])
     cat_pipeline = make_column_transformer(
     (cat_transformer, ['Marketing_Airline_Network', 'Origin', 'Dest', 'Year']),
-    remainder='passthrough')
-    preprocessor = ColumnTransformer([("dist_preproc", distance_pipe, ['Distance']),],)
+    (distance_pipe, ['Distance']), remainder='passthrough')
+    #preprocessor = ColumnTransformer([("dist_preproc", distance_pipe, ['Distance']),],)
 
 
 # Creating the full pipeline
-    preproc_full = make_union(preprocessor, cat_pipeline)
-    X_processed = pd.DataFrame(preproc_full.fit_transform(df_X))
+    #preproc_full = make_union(preprocessor, cat_pipeline)
+    X_processed = pd.DataFrame(cat_pipeline.fit_transform(df_X))
+    #X_processed = X_processed.drop(columns = [680])
     print("✅ preprocess_X() done")
     return X_processed
 
