@@ -9,6 +9,32 @@ LOCAL_REGISTRY_PATH = os.path.expanduser(os.environ.get("LOCAL_REGISTRY_PATH"))
 PROJECT = os.environ.get("PROJECT")
 DATASET = os.environ.get("DATASET")
 
+COLUMN_NAMES_RAW = ["Unnamed: 0"
+,"FlightDate"
+,"Year"
+,"Quarter"
+,"Month"
+,"DayofMonth"
+,"DayOfWeek"
+,"Airline"
+,"Operating_Airline"
+,"Marketing_Airline_Network"
+,"Flight_Number_Marketing_Airline"
+,"Origin"
+,"Dest"
+,"CRSDepTime"
+,"OriginAirportID"
+,"OriginCityName"
+,"OriginStateName"
+,"DestAirportID"
+,"DestCityName"
+,"DestStateName"
+,"CRSArrTime"
+,"Distance"
+,"ArrDelayMinutes"
+,"Cancelled"
+,"Diverted"]
+
 ################## VALIDATIONS #################
 
 env_valid_options = dict(

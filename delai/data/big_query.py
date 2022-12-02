@@ -39,3 +39,30 @@ def get_bq_chunk(table: str,
 
     big_query_df.rename(columns = {'Unnamed__0':'Unnamed: 0'}, inplace = True)
     return big_query_df
+
+def save_bq_chunk(table: str,
+                  data: pd.DataFrame,
+                  is_first: bool):
+    """
+    save a chunk of the raw dataset to big query
+    empty the table beforehands if `is_first` is True
+    """
+
+    print(f"\nSave data to big query {table}:")
+
+    table = f"{PROJECT}.{DATASET}.{table}"
+
+    # bq requires str columns starting with a letter or underscore
+    data.columns = [f"_{column}" if type(column) != str else column for column in data.columns]
+
+    client = bigquery.Client()
+
+    # define write mode and schema
+    write_mode = "WRITE_TRUNCATE" if is_first else "WRITE_APPEND"
+    job_config = bigquery.LoadJobConfig(write_disposition=write_mode)
+
+    print(f"\n{'Write' if is_first else 'Append'} {table} ({data.shape[0]} rows)")
+
+    # load data
+    job = client.load_table_from_dataframe(data, table, job_config=job_config)
+    result = job.result()  # wait for the job to complete

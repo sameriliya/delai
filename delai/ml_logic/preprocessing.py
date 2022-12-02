@@ -121,4 +121,4 @@ def preprocess_y(y, is_binary=True):
         print("✅ BINARY preprocess_y() done")
     if not is_binary:
         print("✅ STANDARD preprocess_y() done")
-    return encoded_target
+    return pd.DataFrame(encoded_target)
