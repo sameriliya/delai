@@ -35,8 +35,8 @@ if __name__ == '__main__':
     model = test_model_run(bqX_output,bqy_output)
     print('Model has been fitted successfully')
 
-    X_new = get_processed_flight_details()
-    print(X_new)
+    # X_new = get_processed_flight_details()
+    # print(X_new)
     # X_new = preprocess_X(X_new)
     # print('processed sample flight')
     # print(model.predict(X_new))
