@@ -7,6 +7,7 @@ from delai.ml_logic.preprocessing import split_X_y, preprocess_X, preprocess_y
 from delai.ml_logic.params import (CHUNK_SIZE)
 from delai.data.big_query import get_bq_chunk
 from delai.api.flightaware import get_processed_flight_details
+from delai.ml_logic.registry import save_model
 import pandas as pd
 
 if __name__ == '__main__':
@@ -32,8 +33,10 @@ if __name__ == '__main__':
     bqy_output = preprocess_y(bq_df_y)
     print(bqy_output)
 
-    model = test_model_run(bqX_output,bqy_output)
+    model,history = test_model_run(bqX_output,bqy_output)
     print('Model has been fitted successfully')
+
+    save_model(model)
 
     # X_new = get_processed_flight_details()
     # print(X_new)
