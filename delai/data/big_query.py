@@ -8,7 +8,6 @@ DATASET = os.environ.get("DATASET")
 def get_bq_chunk(table: str,
                  index: int,
                  chunk_size: int,
-                 dtypes: dict = None,
                  verbose=True) -> pd.DataFrame:
     """
     return a chunk of a big query dataset table
@@ -37,5 +36,6 @@ def get_bq_chunk(table: str,
 
     if big_query_df.shape[0] == 0:
         return None  # end of data
+
     big_query_df.rename(columns = {'Unnamed__0':'Unnamed: 0'}, inplace = True)
     return big_query_df
