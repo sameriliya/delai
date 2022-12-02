@@ -91,8 +91,8 @@ def extract_info_from_datetime_col(df):
     df['Month'] = df['scheduled_out_local'].dt.month
     df['DayofMonth'] = df['scheduled_out_local'].dt.day
     df['DayOfWeek'] = df['scheduled_out_local'].dt.dayofweek + 1
-    df['CRSDepTime'] = df['scheduled_out_local'].dt.strftime('%H%M')
-    df['CRSArrTime'] = df['scheduled_in_local'].dt.strftime('%H%M')
+    df['CRSDepTime'] = df['scheduled_out_local'].dt.strftime('%H%M').astype(int)
+    df['CRSArrTime'] = df['scheduled_in_local'].dt.strftime('%H%M').astype(int)
     df['FlightDate'] = df['scheduled_out_local'].dt.date
     return df
 
