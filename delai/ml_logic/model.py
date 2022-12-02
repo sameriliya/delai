@@ -80,9 +80,9 @@ def evaluate_model(model: Model,
         return_dict=True)
 
     loss = metrics["loss"]
-    f1 = metrics["accuracy"]
+    accuracy = metrics["accuracy"]
 
-    print(f"\n✅ model evaluated: loss {round(loss, 2)} mae {round(f1, 2)}")
+    print(f"\n✅ model evaluated: loss {round(loss, 2)} accuracy {round(accuracy, 2)}")
 
     return metrics
 
