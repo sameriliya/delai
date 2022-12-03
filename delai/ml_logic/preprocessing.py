@@ -1,5 +1,4 @@
 # Importing the packages
-
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
@@ -12,21 +11,21 @@ from sklearn.preprocessing import FunctionTransformer, OneHotEncoder, LabelEncod
 from sklearn.pipeline import make_union
 
 def split_X_y(df):
-    df_X = df.drop(columns = ['ArrDelayMinutes','Cancelled','Diverted'])
-    df_y = df[['Unnamed: 0','ArrDelayMinutes','Cancelled','Diverted']]
+    X_cols = ['Year','Quarter','Month','DayofMonth','DayOfWeek','CRSDepTime','CRSArrTime',
+              'Marketing_Airline_Network','Origin','Dest','Distance']
+    df_X = df[X_cols]
+    df_y = df[['ArrDelayMinutes','Cancelled','Diverted']]
     return df_X, df_y
 
 def preprocess_X(df_X):
 # Dropping columns
     try:
-        df_X = df_X.drop(columns = ['Unnamed: 0','Airline','Operating_Airline', 'Flight_Number_Marketing_Airline',
-              'OriginStateName', 'OriginCityName','DestStateName', 'DestCityName', 'DestAirportID', 'OriginAirportID', 'FlightDate'])
         df_X = df_X.drop_duplicates()
 
     except:
         print("Columns don't match input data. Not sure what to clean!")
 
-# Scalling distances
+# Scaling distances
 
     dist_min = df_X['Distance'].min()
     dist_max = df_X['Distance'].max()
@@ -34,7 +33,7 @@ def preprocess_X(df_X):
     distance_pipe = make_pipeline(FunctionTransformer(lambda dist: (dist - dist_min)/(dist_max - dist_min)))
 
 
-# Formatting and Scalling time
+# Formatting and Scaling time
 
     # df_X['FlightDate'] = pd.to_datetime(df_X["FlightDate"])
     # df_X['FlightDate'] = df_X['FlightDate'].dt.dayofweek + 1
@@ -114,12 +113,12 @@ def preprocess_y(y, is_binary=True):
         y.loc[y["Cancelled"], "DelayGroup"] = "NoArrival"
         y.loc[y["Diverted"], "DelayGroup"] = "NoArrival"
 
-    y = y.drop(columns = ['ArrDelayMinutes', 'Cancelled', 'Diverted', 'Unnamed: 0'])
+    y_array = y['DelayGroup']
     label_encoder = LabelEncoder()
-    encoded_target = label_encoder.fit_transform(y['DelayGroup'])
+    encoded_target = label_encoder.fit_transform(y_array)
 
     if is_binary:
         print("✅ BINARY preprocess_y() done")
     if not is_binary:
         print("✅ STANDARD preprocess_y() done")
-    return encoded_target
+    return pd.DataFrame(encoded_target)

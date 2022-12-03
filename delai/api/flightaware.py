@@ -91,8 +91,8 @@ def extract_info_from_datetime_col(df):
     df['Month'] = df['scheduled_out_local'].dt.month
     df['DayofMonth'] = df['scheduled_out_local'].dt.day
     df['DayOfWeek'] = df['scheduled_out_local'].dt.dayofweek + 1
-    df['CRSDepTime'] = df['scheduled_out_local'].dt.strftime('%H%M')
-    df['CRSArrTime'] = df['scheduled_in_local'].dt.strftime('%H%M')
+    df['CRSDepTime'] = df['scheduled_out_local'].dt.strftime('%H%M').astype(int)
+    df['CRSArrTime'] = df['scheduled_in_local'].dt.strftime('%H%M').astype(int)
     df['FlightDate'] = df['scheduled_out_local'].dt.date
     return df
 
@@ -124,7 +124,7 @@ def clean_df(df):
     return df_out
 
 
-def get_processed_flight_details(flight_number='UAL4', date=datetime.date.today()):
+def get_processed_flight_details(flight_number='UAL3519', date=datetime.date.today()):
     '''Given a flight number and date of travel, use functions to
     return a cleaned dataframe of flight details to pass into an ML model
     '''
