@@ -38,7 +38,7 @@ COLUMN_NAMES_RAW = ["Unnamed: 0"
 ################## VALIDATIONS #################
 
 env_valid_options = dict(
-    DATASET_SIZE=["1k", "10k", "100k", "500k", "50M", "new"],
+    DATASET_SIZE=["1k", "10k", "100k", "500k", "50M", "new", "full"],
     VALIDATION_DATASET_SIZE=["1k", "10k", "100k", "500k", "500k", "new"],
     DATA_SOURCE=["local", "big query"],
     MODEL_TARGET=["local", "gcs", "mlflow"],

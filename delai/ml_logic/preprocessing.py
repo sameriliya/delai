@@ -11,15 +11,16 @@ from sklearn.preprocessing import FunctionTransformer, OneHotEncoder, LabelEncod
 from sklearn.pipeline import make_union
 
 def split_X_y(df):
-    X_cols = ['Year','Quarter','Month','DayofMonth','DayOfWeek','CRSDepTime','CRSArrTime',
-              'Marketing_Airline_Network','Origin','Dest','Distance']
-    df_X = df[X_cols]
+    df_X = df.drop(columns = ['ArrDelayMinutes','Cancelled','Diverted'])
     df_y = df[['ArrDelayMinutes','Cancelled','Diverted']]
     return df_X, df_y
 
 def preprocess_X(df_X):
+    cols_to_encode = df_X[['Origin','Dest','Marketing_Airline_Network']]
+
 # Dropping columns
     try:
+        df_X = df_X.drop(columns = ['Origin','Dest','Marketing_Airline_Network'])
         df_X = df_X.drop_duplicates()
 
     except:
@@ -27,8 +28,8 @@ def preprocess_X(df_X):
 
 # Scaling distances
 
-    dist_min = df_X['Distance'].min()
-    dist_max = df_X['Distance'].max()
+    dist_min = 16
+    dist_max = 5812
 
     distance_pipe = make_pipeline(FunctionTransformer(lambda dist: (dist - dist_min)/(dist_max - dist_min)))
 
@@ -80,7 +81,8 @@ def preprocess_X(df_X):
     cat_transformer = OneHotEncoder(handle_unknown='ignore', sparse=False)
 # print(df_X['Marketing_Airline_Network', 'Origin', 'Dest', 'Year'])
     cat_pipeline = make_column_transformer(
-    (cat_transformer, ['Marketing_Airline_Network', 'Origin', 'Dest', 'Year']),
+    # (cat_transformer, ['Marketing_Airline_Network', 'Origin', 'Dest', 'Year']),
+    (cat_transformer, ['Year']),
     (distance_pipe, ['Distance']), remainder='passthrough')
     #preprocessor = ColumnTransformer([("dist_preproc", distance_pipe, ['Distance']),],)
 
@@ -88,6 +90,8 @@ def preprocess_X(df_X):
 # Creating the full pipeline
     #preproc_full = make_union(preprocessor, cat_pipeline)
     X_processed = pd.DataFrame(cat_pipeline.fit_transform(df_X))
+    X_processed = X_processed.merge(cols_to_encode,
+                                    left_index = True, right_index = True)
     #X_processed = X_processed.drop(columns = [680])
     print("✅ preprocess_X() done")
     return X_processed
@@ -121,4 +125,4 @@ def preprocess_y(y, is_binary=True):
         print("✅ BINARY preprocess_y() done")
     if not is_binary:
         print("✅ STANDARD preprocess_y() done")
-    return pd.DataFrame(encoded_target)
+    return pd.DataFrame(encoded_target, columns=['y'])
