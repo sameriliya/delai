@@ -12,10 +12,13 @@ import pandas as pd
 
 from delai.ml_logic.params import (CHUNK_SIZE,
                                    DATASET_SIZE,
-                                  VALIDATION_DATASET_SIZE)
+                                  VALIDATION_DATASET_SIZE,
+                                  COLUMN_NAMES_PROCESSED)
 from delai.ml_logic.preprocessing import split_X_y, preprocess_X, preprocess_y
 
 from delai.ml_logic.data import get_chunk, save_chunk
+
+from delai.ml_logic.utils import return_dummies_df
 
 
 from colorama import Fore, Style
@@ -83,50 +86,115 @@ def preprocess(source_type='train_subset'):
     return None
 
 def train():
-    '''
-    M's code on model training chunk by chunk
-    '''
-    pass
+
+    from delai.ml_logic.model import (initialize_model, compile_model, train_model)
+    from delai.ml_logic.registry import save_model #load_model
+
+    # iterate on the full dataset per chunks
+    chunk_id = 0
+    row_count = 0
+    metrics_val_list = []
+
+    # Grab chunk of processed data (without encoded data)
+    while (True):
+        data_processed_chunk = get_chunk(source_name=f"train_subset_processed_{DATASET_SIZE}",
+                                         index=chunk_id * CHUNK_SIZE,
+                                         chunk_size=CHUNK_SIZE)
+
+        if data_processed_chunk is None:
+            print(Fore.BLUE + "\nNo more chunk data..." + Style.RESET_ALL)
+            break
+
+    # Encode the chunk with all the columns (pd.concat with dummy df)
+    encoded_df = return_dummies_df(data_processed_chunk)
+    df_tot = pd.DataFrame(columns = COLUMN_NAMES_PROCESSED)
+    df_concat = pd.concat([df_tot,encoded_df]).fillna(0)
+
+    print(df_concat.head())
+
+    # Split X and y
+    # Create X and y as numpy arrays
+    df_X = df_concat.drop(columns=['y','Origin','Dest','Marketing_Airline_Network'])
+    y_train = df_concat['y']
+
+    print(df_X.columns)
+
+    X_train = df_X.to_numpy()
+
+    # increment trained row count
+    chunk_row_count = data_processed_chunk.shape[0]
+    row_count += chunk_row_count
+
+    print(y_train)
+    print(X_train)
+
+
+#     # initialize model
+#     if model is None:
+#         model = initialize_model(X_train)
+
+#     # (re)compile and train the model incrementally
+#     model = compile_model(model #learning_rate)
+#     model, history = train_model(model,
+#                                     X_train_chunk,
+#                                     y_train_chunk,
+#                                     batch_size=batch_size,
+#                                     patience=patience,
+#                                     validation_data=(X_val_processed, y_val))
+
+#     metrics_val_chunk = np.min(history.history['val_mae'])
+#     metrics_val_list.append(metrics_val_chunk)
+#     print(f"chunk MAE: {round(metrics_val_chunk,2)}")
+
+#     # check if chunk was full
+#     if chunk_row_count < CHUNK_SIZE:
+#         print(Fore.BLUE + "\nNo more chunks..." + Style.RESET_ALL)
+#         break
+
+#     chunk_id += 1
+
+# if row_count == 0:
+#     print("\n✅ no new data for the training 👌")
+#     return
+
+# # return the last value of the validation MAE
+# val_mae = metrics_val_list[-1]
+
+# print(f"\n✅ trained on {row_count} rows with MAE: {round(val_mae, 2)}")
+
+# params = dict(
+#     # model parameters
+#     learning_rate=learning_rate,
+#     batch_size=batch_size,
+#     patience=patience,
+#     # package behavior
+#     context="train",
+#     chunk_size=CHUNK_SIZE,
+#     # data source
+#     training_set_size=DATASET_SIZE,
+#     val_set_size=VALIDATION_DATASET_SIZE,
+#     row_count=row_count,
+#     model_version=get_model_version(),
+#     dataset_timestamp=get_dataset_timestamp(),
+# )
+
+# # save model
+# save_model(model=model, params=params, metrics=dict(mae=val_mae))
+
+# return val_mae
+
+#     # From model.py import initialize compile train
+
+#     # Loop back, grab
+#     # Save model to the cloud (including params)
+#     pass
 
 
 
 if __name__ == '__main__':
-    # df = get_pandas_chunk('train_100k')
-    # print(df.head().dtypes)
-    # df_X, df_y = split_X_y(df)
-
-    # X_output = preprocess_X(df_X)
-    # print(X_output.head())
-
-    # y_output = preprocess_y(df_y)
-    # print(y_output)
-
-    # testing retreving data from big_query and preprocessing
-    # bq_df = get_bq_chunk(table = 'train_100k', index = 0, chunk_size = 1000)
-    # print(bq_df.dtypes)
-    # bq_df_X, bq_df_y = split_X_y(bq_df)
-    # print(bq_df_X)
-
-    # bqX_output = preprocess_X(bq_df_X)
-    # print(bqX_output.head())
-
-    # bqy_output = preprocess_y(bq_df_y)
-    # print(bqy_output)
-
-    # model,history = test_model_run(bqX_output,bqy_output)
-    # print('Model has been fitted successfully')
-
-    # save_model(model)
-
-    # X_new = get_processed_flight_details()
-    # print(bq_df_X.dtypes)
-    # print(X_new.dtypes)
-    # X_new = preprocess_X(X_new)
-    # print('processed sample flight')
-    # print(X_new)
-
     #test preprocess function
-    preprocess()
+    #preprocess()
+    train()
     # df = pd.read_csv('raw_data/raw/train_100k.csv')
     # df = get_bq_chunk(table = 'train', index = 0, chunk_size = 100000)
     # print(df.columns)
