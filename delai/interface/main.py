@@ -20,7 +20,7 @@ from delai.ml_logic.data import get_chunk, save_chunk
 
 from colorama import Fore, Style
 
-def preprocess(source_type='train'):
+def preprocess(source_type='train_subset'):
     """
     Preprocess the dataset by chunks fitting in memory.
     parameters:
@@ -36,6 +36,9 @@ def preprocess(source_type='train'):
     source_name = f"{source_type}_{DATASET_SIZE}"
     destination_name = f"{source_type}_processed_{DATASET_SIZE}"
 
+    if DATASET_SIZE == 'full':
+        source_name = f"{source_type}"
+
     while (True):
 
         print(Fore.BLUE + f"\nProcessing chunk n°{chunk_id}..." + Style.RESET_ALL)
@@ -50,7 +53,6 @@ def preprocess(source_type='train'):
             break
 
         row_count += data_chunk.shape[0]
-        print(data_chunk.head()) # test
         df_X, df_y = split_X_y(data_chunk)
 
         # break out of while loop if cleaning removed all rows
@@ -60,8 +62,6 @@ def preprocess(source_type='train'):
 
         X_processed_chunk = preprocess_X(df_X)
         y_processed_chunk = preprocess_y(df_y)
-        print(type(X_processed_chunk)) #test
-        print(type(y_processed_chunk)) #test
         data_processed_chunk = pd.DataFrame(
             pd.concat((X_processed_chunk, y_processed_chunk), axis=1))
 
@@ -127,7 +127,8 @@ if __name__ == '__main__':
 
     #test preprocess function
     preprocess()
-    # df = pd.read_csv('../raw_data/ms_train_100k.csv')
+    # df = pd.read_csv('raw_data/raw/train_100k.csv')
+    # df = get_bq_chunk(table = 'train', index = 0, chunk_size = 100000)
     # print(df.columns)
     # df_X, df_y = split_X_y(df)
     # X_output = preprocess_X(df_X)

@@ -16,6 +16,8 @@ def split_X_y(df):
     return df_X, df_y
 
 def preprocess_X(df_X):
+    cols_to_encode = df_X[['Origin','Dest','Marketing_Airline_Network']]
+
 # Dropping columns
     try:
         df_X = df_X.drop(columns = ['Origin','Dest','Marketing_Airline_Network'])
@@ -88,6 +90,8 @@ def preprocess_X(df_X):
 # Creating the full pipeline
     #preproc_full = make_union(preprocessor, cat_pipeline)
     X_processed = pd.DataFrame(cat_pipeline.fit_transform(df_X))
+    X_processed = X_processed.merge(cols_to_encode,
+                                    left_index = True, right_index = True)
     #X_processed = X_processed.drop(columns = [680])
     print("✅ preprocess_X() done")
     return X_processed
