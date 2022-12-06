@@ -85,7 +85,7 @@ def preprocess_y(y, is_binary=True):
         y.loc[y["Cancelled"], "DelayGroup"] = 1
         y.loc[y["Diverted"], "DelayGroup"] = 1
         # Any remaining None values, assume delayed so turn to 1
-        y.loc[y["DelayGroup"].isna()] = 1
+        y["DelayGroup"].fillna(1, inplace = True)
         output = y[['DelayGroup']].rename(columns = {'DelayGroup':'y'})
 
 
