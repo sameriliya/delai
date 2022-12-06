@@ -1,26 +1,14 @@
-# this is the main interface
-# i.e to run preprocessing, training, evaluating, predicting
-# calling functions from other .py files
-from delai.data.local_disk import get_pandas_chunk
-from delai.ml_logic.model import test_model_run
-from delai.data.big_query import get_bq_chunk
-from delai.api.flightaware import get_processed_flight_details
-from delai.ml_logic.registry import save_model
-
 import numpy as np
 import pandas as pd
+import datetime
 
 from delai.ml_logic.params import (CHUNK_SIZE,
                                    DATASET_SIZE,
                                   VALIDATION_DATASET_SIZE,
                                   COLUMN_NAMES_PROCESSED)
 from delai.ml_logic.preprocessing import split_X_y, preprocess_X, preprocess_y
-
 from delai.ml_logic.data import get_chunk, save_chunk
-
-from delai.ml_logic.utils import return_dummies_df
-
-
+from delai.ml_logic.utils import return_dummies_df, get_dataset_timestamp
 from colorama import Fore, Style
 
 def preprocess(source_type='train_subset'):
@@ -62,11 +50,18 @@ def preprocess(source_type='train_subset'):
         if len(df_X) == 0:
             print(Fore.BLUE + "\nNo cleaned data in latest chunk..." + Style.RESET_ALL)
             break
-
+        # preprocess the X and Y DataFrames into desired output
         X_processed_chunk = preprocess_X(df_X)
         y_processed_chunk = preprocess_y(df_y)
-        data_processed_chunk = pd.DataFrame(
-            pd.concat((X_processed_chunk, y_processed_chunk), axis=1))
+        data_processed_chunk = pd.merge(X_processed_chunk, y_processed_chunk,
+                                        left_index=True, right_index=True)
+        # helpful stats for terminal
+        print(data_processed_chunk.loc[data_processed_chunk.isna().any(axis=1)])
+        print('X_proc_shape:', X_processed_chunk.shape)
+        print('y_proc_shape:', y_processed_chunk.shape)
+        print(data_processed_chunk.head())
+        print('full_data_shape:', data_processed_chunk.shape)
+        print('full_data_shape_noNA:', data_processed_chunk.dropna().shape)
 
         # save and append the chunk
         is_first = chunk_id == 0
@@ -184,8 +179,8 @@ def train():
         training_set_size=DATASET_SIZE,
         val_set_size=VALIDATION_DATASET_SIZE,
         row_count=row_count,
-        # model_version=get_model_version(),
-        # dataset_timestamp=get_dataset_timestamp(),
+        #model_version=get_model_version(),
+        #dataset_timestamp=get_dataset_timestamp(),
     )
 
     # save model
@@ -202,9 +197,91 @@ def train():
 #     # Save model to the cloud (including params)
 #     pass
 
+def evaluate():
+    """
+    Evaluate the performance of the latest production model on new data
+    """
 
+    print("\n⭐️ use case: evaluate")
+
+    from delai.ml_logic.model import evaluate_model
+    from delai.ml_logic.registry import load_model, save_model
+    from delai.ml_logic.registry import get_model_version
+
+    # load new data
+    new_data = get_chunk(source_name=f"val_subset_processed_{DATASET_SIZE}",
+                         index=0,
+                         chunk_size=None)  # retrieve all further data
+
+    if new_data is None:
+        print("\n✅ no data to evaluate")
+        return None
+
+    #Do our post processing to encode Origin / Dest / Airline
+    encoded_df = return_dummies_df(new_data)
+    df_tot = pd.DataFrame(columns = COLUMN_NAMES_PROCESSED)
+    df_concat = pd.concat([df_tot,encoded_df]).fillna(0)
+    # Split X and y
+    # Create X and y as numpy arrays
+    df_X = df_concat.drop(columns=['y','Origin','Dest','Marketing_Airline_Network'])
+    y_new = df_concat['y']
+    X_new = df_X.to_numpy()
+    print(df_X.shape)
+    print(df_X.columns)
+    #Continue with same logic as taxifare
+    model = load_model()
+
+    metrics_dict = evaluate_model(model=model, X=X_new, y=y_new)
+    acc = metrics_dict["accuracy"] #using accuracy here as classification
+
+    # save evaluation
+    params = dict(
+        #dataset_timestamp=get_dataset_timestamp(),
+        model_version=get_model_version(),
+        # package behavior
+        context="evaluate",
+        # data source
+        training_set_size=DATASET_SIZE,
+        val_set_size=VALIDATION_DATASET_SIZE,
+        row_count=len(X_new))
+
+    save_model(params=params, metrics=dict(accuracy=acc))
+
+    return acc
+
+def pred(flight_number='UAL3519', date=datetime.date.today()) -> np.ndarray:
+    """
+    Make a prediction using the latest trained model
+    """
+
+    print("\n⭐️ use case: predict")
+
+    from delai.ml_logic.registry import load_model
+    from delai.api.flightaware import get_processed_flight_details
+
+    # get details of new flight from API call, and remove column to pass into preprocessor
+    df_new = get_processed_flight_details(flight_number, date).drop(columns = 'FlightDate')
+    X_processed = preprocess_X(df_new)
+    print(X_processed)
+
+    encoded_df = return_dummies_df(X_processed)
+    df_tot = pd.DataFrame(columns = COLUMN_NAMES_PROCESSED)
+    df_concat = pd.concat([df_tot,encoded_df]).fillna(0)
+    # Split X and y
+    # Create X and y as numpy arrays
+    X_new = df_concat.drop(columns=['y','Origin','Dest','Marketing_Airline_Network'])
+    print(X_new)
+    model = load_model()
+    y_pred = model.predict(X_new.to_numpy())
+
+    print("\n✅ prediction done: ", y_pred, y_pred.shape)
+
+    return y_pred
 
 if __name__ == '__main__':
     #test preprocess function
-    #preprocess()
-    train()
+    preprocess()
+    # preprocess(source_type = 'val_subset')
+    # train()
+    # evaluate()
+    # pred()
