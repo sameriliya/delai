@@ -35,20 +35,16 @@ COLUMN_NAMES_RAW = ["Unnamed: 0"
 ,"Cancelled"
 ,"Diverted"]
 
-COLUMN_NAMES_PROCESSED = ["Year"
-,"Quarter"
-,"Month"
-,"DayofMonth"
-,"DayOfWeek"
-,"CRSDepTime"
-,"CRSArrTime"
-,"Marketing_Airline_Network"
-,"Origin"
-,"Dest"
-,"Distance"
-,"ArrDelayMinutes"
-,"Cancelled"
-,"Diverted"
+COLUMN_NAMES_PROCESSED = ['y_2018', 'y_2019','y_2020', 'y_2021', 'y_2022',
+'dist_scaled',
+'sin_dow', 'cos_dow',
+'sin_dom', 'cos_dom',
+'sin_month', 'cos_month',
+'sin_qua', 'cos_qua',
+'sin_dep', 'cos_dep',
+'sin_arr', 'cos_arr',
+'Marketing_Airline_Network', 'Origin', 'Dest'
+,"y"
 ,"o_ABE"
 ,"o_ABI"
 ,"o_ABQ"
@@ -835,16 +831,13 @@ COLUMN_NAMES_PROCESSED = ["Year"
 ,"a_NK"
 ,"a_UA"
 ,"a_VX"
-,"a_WN"
-,"white_check_mark"
-,"eyes"
-,"raised_hands"]
+,"a_WN"]
 
 ################## VALIDATIONS #################
 
 env_valid_options = dict(
-    DATASET_SIZE=["1k", "10k", "100k", "500k", "50M", "new", "full"],
-    VALIDATION_DATASET_SIZE=["1k", "10k", "100k", "500k", "500k", "new"],
+    DATASET_SIZE=["1k", "10k", "100k", "500k", "50M", "new", "full", "6m","14m"],
+    VALIDATION_DATASET_SIZE=["1k", "10k", "100k", "500k", "500k", "new", "full", "6m"],
     DATA_SOURCE=["local", "big query"],
     MODEL_TARGET=["local", "gcs", "mlflow"],
 )

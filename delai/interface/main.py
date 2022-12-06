@@ -1,26 +1,14 @@
-# this is the main interface
-# i.e to run preprocessing, training, evaluating, predicting
-# calling functions from other .py files
-from delai.data.local_disk import get_pandas_chunk
-from delai.ml_logic.model import test_model_run
-from delai.data.big_query import get_bq_chunk
-from delai.api.flightaware import get_processed_flight_details
-from delai.ml_logic.registry import save_model
-
 import numpy as np
 import pandas as pd
+import datetime
 
 from delai.ml_logic.params import (CHUNK_SIZE,
                                    DATASET_SIZE,
                                   VALIDATION_DATASET_SIZE,
                                   COLUMN_NAMES_PROCESSED)
 from delai.ml_logic.preprocessing import split_X_y, preprocess_X, preprocess_y
-
 from delai.ml_logic.data import get_chunk, save_chunk
-
-from delai.ml_logic.utils import return_dummies_df
-
-
+from delai.ml_logic.utils import return_dummies_df, get_dataset_timestamp
 from colorama import Fore, Style
 
 def preprocess(source_type='train_subset'):
@@ -62,11 +50,18 @@ def preprocess(source_type='train_subset'):
         if len(df_X) == 0:
             print(Fore.BLUE + "\nNo cleaned data in latest chunk..." + Style.RESET_ALL)
             break
-
+        # preprocess the X and Y DataFrames into desired output
         X_processed_chunk = preprocess_X(df_X)
         y_processed_chunk = preprocess_y(df_y)
-        data_processed_chunk = pd.DataFrame(
-            pd.concat((X_processed_chunk, y_processed_chunk), axis=1))
+        data_processed_chunk = pd.merge(X_processed_chunk, y_processed_chunk,
+                                        left_index=True, right_index=True)
+        # helpful stats for terminal
+        print(data_processed_chunk.loc[data_processed_chunk.isna().any(axis=1)])
+        print('X_proc_shape:', X_processed_chunk.shape)
+        print('y_proc_shape:', y_processed_chunk.shape)
+        print(data_processed_chunk.head())
+        print('full_data_shape:', data_processed_chunk.shape)
+        print('full_data_shape_noNA:', data_processed_chunk.dropna().shape)
 
         # save and append the chunk
         is_first = chunk_id == 0
@@ -88,7 +83,15 @@ def preprocess(source_type='train_subset'):
 def train():
 
     from delai.ml_logic.model import (initialize_model, compile_model, train_model)
-    from delai.ml_logic.registry import save_model #load_model
+    from delai.ml_logic.registry import save_model, load_model
+
+    model = None
+    model = load_model()  # production model
+
+    # model params
+    learning_rate = 0.001
+    batch_size = 256
+    patience = 2
 
     # iterate on the full dataset per chunks
     chunk_id = 0
@@ -97,6 +100,7 @@ def train():
 
     # Grab chunk of processed data (without encoded data)
     while (True):
+        print('starting loop')
         data_processed_chunk = get_chunk(source_name=f"train_subset_processed_{DATASET_SIZE}",
                                          index=chunk_id * CHUNK_SIZE,
                                          chunk_size=CHUNK_SIZE)
@@ -105,81 +109,85 @@ def train():
             print(Fore.BLUE + "\nNo more chunk data..." + Style.RESET_ALL)
             break
 
-    # Encode the chunk with all the columns (pd.concat with dummy df)
-    encoded_df = return_dummies_df(data_processed_chunk)
-    df_tot = pd.DataFrame(columns = COLUMN_NAMES_PROCESSED)
-    df_concat = pd.concat([df_tot,encoded_df]).fillna(0)
+        # Encode the chunk with all the columns (pd.concat with dummy df)
+        encoded_df = return_dummies_df(data_processed_chunk)
+        df_tot = pd.DataFrame(columns = COLUMN_NAMES_PROCESSED)
+        df_concat = pd.concat([df_tot,encoded_df]).fillna(0)
 
-    print(df_concat.head())
+        print(df_concat.head())
 
-    # Split X and y
-    # Create X and y as numpy arrays
-    df_X = df_concat.drop(columns=['y','Origin','Dest','Marketing_Airline_Network'])
-    y_train = df_concat['y']
+        # Split X and y
+        # Create X and y as numpy arrays
+        df_X = df_concat.drop(columns=['y','Origin','Dest','Marketing_Airline_Network'])
+        y_train = df_concat['y']
 
-    print(df_X.columns)
+        print(df_X.columns)
 
-    X_train = df_X.to_numpy()
+        X_train = df_X.to_numpy()
 
-    # increment trained row count
-    chunk_row_count = data_processed_chunk.shape[0]
-    row_count += chunk_row_count
+        # increment trained row count
+        chunk_row_count = data_processed_chunk.shape[0]
+        row_count += chunk_row_count
 
-    print(y_train)
-    print(X_train)
+        print(y_train)
+        print(X_train)
 
+        # initialize model
+        if model is None:
+            model = initialize_model(X_train)
 
-#     # initialize model
-#     if model is None:
-#         model = initialize_model(X_train)
+        # (re)compile and train the model incrementally
+        model = compile_model(model,) #learning_rate)
+        model, history = train_model(model,
+                                        X_train,
+                                        y_train,
+                                        batch_size=batch_size,
+                                        patience=patience,
+                                        # validation_data=(X_val_processed, y_val)
+                                        )
 
-#     # (re)compile and train the model incrementally
-#     model = compile_model(model #learning_rate)
-#     model, history = train_model(model,
-#                                     X_train_chunk,
-#                                     y_train_chunk,
-#                                     batch_size=batch_size,
-#                                     patience=patience,
-#                                     validation_data=(X_val_processed, y_val))
+        # metrics_val_chunk = np.min(history.history['val_mae'])
+        # metrics_val_list.append(metrics_val_chunk)
+        # print(f"chunk MAE: {round(metrics_val_chunk,2)}")
 
-#     metrics_val_chunk = np.min(history.history['val_mae'])
-#     metrics_val_list.append(metrics_val_chunk)
-#     print(f"chunk MAE: {round(metrics_val_chunk,2)}")
+        # check if chunk was full
+        if chunk_row_count < CHUNK_SIZE:
+            print(Fore.BLUE + "\nNo more chunks..." + Style.RESET_ALL)
+            break
 
-#     # check if chunk was full
-#     if chunk_row_count < CHUNK_SIZE:
-#         print(Fore.BLUE + "\nNo more chunks..." + Style.RESET_ALL)
-#         break
+        chunk_id += 1
 
-#     chunk_id += 1
+    if row_count == 0:
+        print("\n✅ no new data for the training 👌")
+        return
 
-# if row_count == 0:
-#     print("\n✅ no new data for the training 👌")
-#     return
 
 # # return the last value of the validation MAE
 # val_mae = metrics_val_list[-1]
 
-# print(f"\n✅ trained on {row_count} rows with MAE: {round(val_mae, 2)}")
+    print(f"\n✅ trained on {row_count} rows")# with MAE: {round(val_mae, 2)}")
 
-# params = dict(
-#     # model parameters
-#     learning_rate=learning_rate,
-#     batch_size=batch_size,
-#     patience=patience,
-#     # package behavior
-#     context="train",
-#     chunk_size=CHUNK_SIZE,
-#     # data source
-#     training_set_size=DATASET_SIZE,
-#     val_set_size=VALIDATION_DATASET_SIZE,
-#     row_count=row_count,
-#     model_version=get_model_version(),
-#     dataset_timestamp=get_dataset_timestamp(),
-# )
+    params = dict(
+        # model parameters
+        learning_rate=learning_rate,
+        batch_size=batch_size,
+        patience=patience,
+        # package behavior
+        context="train",
+        chunk_size=CHUNK_SIZE,
+        # data source
+        training_set_size=DATASET_SIZE,
+        val_set_size=VALIDATION_DATASET_SIZE,
+        row_count=row_count,
+        #model_version=get_model_version(),
+        #dataset_timestamp=get_dataset_timestamp(),
+    )
 
-# # save model
-# save_model(model=model, params=params, metrics=dict(mae=val_mae))
+    # save model
+    save_model(model=model, params=params,) #metrics=dict(mae=val_mae))
+
+    print('Completed model training process!')
+
 
 # return val_mae
 
@@ -189,18 +197,91 @@ def train():
 #     # Save model to the cloud (including params)
 #     pass
 
+def evaluate():
+    """
+    Evaluate the performance of the latest production model on new data
+    """
 
+    print("\n⭐️ use case: evaluate")
+
+    from delai.ml_logic.model import evaluate_model
+    from delai.ml_logic.registry import load_model, save_model
+    from delai.ml_logic.registry import get_model_version
+
+    # load new data
+    new_data = get_chunk(source_name=f"val_subset_processed_{DATASET_SIZE}",
+                         index=0,
+                         chunk_size=None)  # retrieve all further data
+
+    if new_data is None:
+        print("\n✅ no data to evaluate")
+        return None
+
+    #Do our post processing to encode Origin / Dest / Airline
+    encoded_df = return_dummies_df(new_data)
+    df_tot = pd.DataFrame(columns = COLUMN_NAMES_PROCESSED)
+    df_concat = pd.concat([df_tot,encoded_df]).fillna(0)
+    # Split X and y
+    # Create X and y as numpy arrays
+    df_X = df_concat.drop(columns=['y','Origin','Dest','Marketing_Airline_Network'])
+    y_new = df_concat['y']
+    X_new = df_X.to_numpy()
+    print(df_X.shape)
+    print(df_X.columns)
+    #Continue with same logic as taxifare
+    model = load_model()
+
+    metrics_dict = evaluate_model(model=model, X=X_new, y=y_new)
+    acc = metrics_dict["accuracy"] #using accuracy here as classification
+
+    # save evaluation
+    params = dict(
+        #dataset_timestamp=get_dataset_timestamp(),
+        model_version=get_model_version(),
+        # package behavior
+        context="evaluate",
+        # data source
+        training_set_size=DATASET_SIZE,
+        val_set_size=VALIDATION_DATASET_SIZE,
+        row_count=len(X_new))
+
+    save_model(params=params, metrics=dict(accuracy=acc))
+
+    return acc
+
+def pred(flight_number='UAL3519', date=datetime.date.today()) -> np.ndarray:
+    """
+    Make a prediction using the latest trained model
+    """
+
+    print("\n⭐️ use case: predict")
+
+    from delai.ml_logic.registry import load_model
+    from delai.api.flightaware import get_processed_flight_details
+
+    # get details of new flight from API call, and remove column to pass into preprocessor
+    df_new = get_processed_flight_details(flight_number, date).drop(columns = 'FlightDate')
+    X_processed = preprocess_X(df_new)
+    print(X_processed)
+
+    encoded_df = return_dummies_df(X_processed)
+    df_tot = pd.DataFrame(columns = COLUMN_NAMES_PROCESSED)
+    df_concat = pd.concat([df_tot,encoded_df]).fillna(0)
+    # Split X and y
+    # Create X and y as numpy arrays
+    X_new = df_concat.drop(columns=['y','Origin','Dest','Marketing_Airline_Network'])
+    print(X_new)
+    model = load_model()
+    y_pred = model.predict(X_new.to_numpy())
+
+    print("\n✅ prediction done: ", y_pred, y_pred.shape)
+
+    return y_pred
 
 if __name__ == '__main__':
     #test preprocess function
-    #preprocess()
-    train()
-    # df = pd.read_csv('raw_data/raw/train_100k.csv')
-    # df = get_bq_chunk(table = 'train', index = 0, chunk_size = 100000)
-    # print(df.columns)
-    # df_X, df_y = split_X_y(df)
-    # X_output = preprocess_X(df_X)
-    # print(X_output.head())
-    # y_output = preprocess_y(df_y)
-    # print(y_output)
-    # X_output.to_csv('../raw_data/m_s_train_processed.csv', index = False)
+    preprocess()
+    # preprocess(source_type = 'val_subset')
+    # train()
+    # evaluate()
+    # pred()
