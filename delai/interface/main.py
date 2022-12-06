@@ -83,6 +83,7 @@ def preprocess(source_type='train_subset'):
 def train():
 
     from delai.ml_logic.model import (initialize_model, compile_model, train_model)
+    import tensorflow as tf
     from delai.ml_logic.registry import save_model, load_model
 
     model = None
@@ -120,10 +121,12 @@ def train():
         # Create X and y as numpy arrays
         df_X = df_concat.drop(columns=['y','Origin','Dest','Marketing_Airline_Network'])
         y_train = df_concat['y']
+        y_train = tf.convert_to_tensor(y_train, dtype=tf.int64)
 
         print(df_X.columns)
 
         X_train = df_X.to_numpy()
+        X_train = tf.convert_to_tensor(X_train, dtype=tf.float32)
 
         # increment trained row count
         chunk_row_count = data_processed_chunk.shape[0]
@@ -280,8 +283,8 @@ def pred(flight_number='UAL3519', date=datetime.date.today()) -> np.ndarray:
 
 if __name__ == '__main__':
     #test preprocess function
-    preprocess()
-    # preprocess(source_type = 'val_subset')
-    # train()
-    # evaluate()
-    # pred()
+    #preprocess()
+    #preprocess(source_type = 'val_subset')
+    train()
+    #evaluate()
+    #pred()
