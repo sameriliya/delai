@@ -17,7 +17,6 @@ def preprocess(source_type='train_subset'):
     parameters:
     - source_type: 'train' or 'val'
     """
-
     print("\n⭐️ use case: preprocess")
 
     # iterate on the dataset, by chunks
@@ -81,9 +80,12 @@ def preprocess(source_type='train_subset'):
     return None
 
 def train():
-
+    """Train model chunk by chunk. Either to MLFlow or Locally.
+    Will check for existing model in production on MLFlow and try to update weights
+    if calling on training again"""
+    print("\n⭐️ use case: train")
     from delai.ml_logic.model import (initialize_model, compile_model, train_model)
-    import tensorflow as tf
+    from tensorflow import convert_to_tensor, float32, int64
     from delai.ml_logic.registry import save_model, load_model, get_model_version
 
     # load a validation set common to all chunks, used to early stop model training
@@ -104,9 +106,9 @@ def train():
     # Create X and y as numpy arrays
     df_X = df_concat.drop(columns=['y','Origin','Dest','Marketing_Airline_Network'])
     y_val = df_concat['y']
-    y_val = tf.convert_to_tensor(y_val, dtype=tf.int64)
+    y_val = convert_to_tensor(y_val, dtype=int64)
     X_val_processed = df_X.to_numpy()
-    X_val_processed = tf.convert_to_tensor(X_val_processed, dtype=tf.float32)
+    X_val_processed = convert_to_tensor(X_val_processed, dtype=float32)
 
     model = None
     model = load_model()  # production model
@@ -144,12 +146,12 @@ def train():
         # Create X and y as numpy arrays
         df_X = df_concat.drop(columns=['y','Origin','Dest','Marketing_Airline_Network'])
         y_train = df_concat['y']
-        y_train = tf.convert_to_tensor(y_train, dtype=tf.int64)
+        y_train = convert_to_tensor(y_train, dtype=int64)
 
         print(df_X.columns)
 
         X_train = df_X.to_numpy()
-        X_train = tf.convert_to_tensor(X_train, dtype=tf.float32)
+        X_train = convert_to_tensor(X_train, dtype=float32)
 
         # increment trained row count
         chunk_row_count = data_processed_chunk.shape[0]
@@ -228,13 +230,12 @@ def evaluate():
     """
     Evaluate the performance of the latest production model on new data
     """
-
     print("\n⭐️ use case: evaluate")
 
     from delai.ml_logic.model import evaluate_model
     from delai.ml_logic.registry import load_model, save_model
     from delai.ml_logic.registry import get_model_version
-    import tensorflow as tf
+    from tensorflow import convert_to_tensor, float32, int64
 
     # load new data
     new_data = get_chunk(source_name=f"val_subset_processed_{DATASET_SIZE}",
@@ -253,9 +254,9 @@ def evaluate():
     # Create X and y as numpy arrays
     df_X = df_concat.drop(columns=['y','Origin','Dest','Marketing_Airline_Network'])
     y_new = df_concat['y']
-    y_new = tf.convert_to_tensor(y_new, dtype=tf.int64)
+    y_new = convert_to_tensor(y_new, dtype=int64)
     X_new = df_X.to_numpy()
-    X_new = tf.convert_to_tensor(X_new, dtype=tf.float32)
+    X_new = convert_to_tensor(X_new, dtype=float32)
     print(df_X.shape)
     print(df_X.columns)
     #Continue with same logic as taxifare
@@ -317,5 +318,5 @@ if __name__ == '__main__':
     #preprocess()
     #preprocess(source_type = 'val_subset')
     train()
-    # evaluate()
-    # pred()
+    evaluate()
+    #pred()
