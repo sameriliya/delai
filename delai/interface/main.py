@@ -84,7 +84,29 @@ def train():
 
     from delai.ml_logic.model import (initialize_model, compile_model, train_model)
     import tensorflow as tf
-    from delai.ml_logic.registry import save_model, load_model
+    from delai.ml_logic.registry import save_model, load_model, get_model_version
+
+    # load a validation set common to all chunks, used to early stop model training
+    data_val_processed = get_chunk(
+        source_name=f"val_subset_processed_{VALIDATION_DATASET_SIZE}",
+        index=0,  # retrieve from first row
+        chunk_size=None)  # retrieve all further data
+
+    if data_val_processed is None:
+        print("\n✅ no data to train")
+        return None
+
+    #Do our post processing to encode Origin / Dest / Airline
+    encoded_df = return_dummies_df(data_val_processed)
+    df_tot = pd.DataFrame(columns = COLUMN_NAMES_PROCESSED)
+    df_concat = pd.concat([df_tot,encoded_df]).fillna(0)
+    # Split X and y
+    # Create X and y as numpy arrays
+    df_X = df_concat.drop(columns=['y','Origin','Dest','Marketing_Airline_Network'])
+    y_val = df_concat['y']
+    y_val = tf.convert_to_tensor(y_val, dtype=tf.int64)
+    X_val_processed = df_X.to_numpy()
+    X_val_processed = tf.convert_to_tensor(X_val_processed, dtype=tf.float32)
 
     model = None
     model = load_model()  # production model
@@ -147,12 +169,12 @@ def train():
                                         y_train,
                                         batch_size=batch_size,
                                         patience=patience,
-                                        # validation_data=(X_val_processed, y_val)
+                                        validation_data=(X_val_processed, y_val)
                                         )
 
-        # metrics_val_chunk = np.min(history.history['val_mae'])
-        # metrics_val_list.append(metrics_val_chunk)
-        # print(f"chunk MAE: {round(metrics_val_chunk,2)}")
+        metrics_val_chunk = np.min(history.history['val_accuracy'])
+        metrics_val_list.append(metrics_val_chunk)
+        print(f"chunk accuracy: {round(metrics_val_chunk,2)}")
 
         # check if chunk was full
         if chunk_row_count < CHUNK_SIZE:
@@ -166,10 +188,12 @@ def train():
         return
 
 
-# # return the last value of the validation MAE
-# val_mae = metrics_val_list[-1]
+    # # return the last value of the validation accuracy
 
-    print(f"\n✅ trained on {row_count} rows")# with MAE: {round(val_mae, 2)}")
+    val_accuracy = metrics_val_list[-1]
+    # Remember we'll need to change this on new metrics from Michael's
+
+    print(f"\n✅ trained on {row_count} rows with accuracy: {round(val_accuracy, 2)}")
 
     params = dict(
         # model parameters
@@ -183,17 +207,16 @@ def train():
         training_set_size=DATASET_SIZE,
         val_set_size=VALIDATION_DATASET_SIZE,
         row_count=row_count,
-        #model_version=get_model_version(),
-        #dataset_timestamp=get_dataset_timestamp(),
+        model_version=get_model_version()
     )
 
     # save model
-    save_model(model=model, params=params,) #metrics=dict(mae=val_mae))
+    save_model(model=model, params=params, metrics=dict(accuracy=val_accuracy))
 
     print('Completed model training process!')
 
 
-# return val_mae
+    return val_accuracy
 
 #     # From model.py import initialize compile train
 
@@ -211,6 +234,7 @@ def evaluate():
     from delai.ml_logic.model import evaluate_model
     from delai.ml_logic.registry import load_model, save_model
     from delai.ml_logic.registry import get_model_version
+    import tensorflow as tf
 
     # load new data
     new_data = get_chunk(source_name=f"val_subset_processed_{DATASET_SIZE}",
@@ -229,7 +253,9 @@ def evaluate():
     # Create X and y as numpy arrays
     df_X = df_concat.drop(columns=['y','Origin','Dest','Marketing_Airline_Network'])
     y_new = df_concat['y']
+    y_new = tf.convert_to_tensor(y_new, dtype=tf.int64)
     X_new = df_X.to_numpy()
+    X_new = tf.convert_to_tensor(X_new, dtype=tf.float32)
     print(df_X.shape)
     print(df_X.columns)
     #Continue with same logic as taxifare
@@ -288,8 +314,8 @@ def pred(flight_number='DAL383', date=datetime.date.today()) -> np.ndarray:
 
 if __name__ == '__main__':
     #test preprocess function
-    # preprocess()
-    # preprocess(source_type = 'val_subset')
-    # train()
-    evaluate()
-    pred()
+    #preprocess()
+    #preprocess(source_type = 'val_subset')
+    train()
+    # evaluate()
+    # pred()
