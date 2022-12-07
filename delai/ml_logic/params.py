@@ -9,31 +9,45 @@ LOCAL_REGISTRY_PATH = os.path.expanduser(os.environ.get("LOCAL_REGISTRY_PATH"))
 PROJECT = os.environ.get("PROJECT")
 DATASET = os.environ.get("DATASET")
 
-COLUMN_NAMES_RAW = ["Unnamed: 0"
-,"FlightDate"
-,"Year"
+COLUMN_NAMES_RAW = ["Year"
 ,"Quarter"
 ,"Month"
 ,"DayofMonth"
 ,"DayOfWeek"
-,"Airline"
-,"Operating_Airline"
+,"CRSDepTime"
+,"CRSArrTime"
 ,"Marketing_Airline_Network"
-,"Flight_Number_Marketing_Airline"
 ,"Origin"
 ,"Dest"
-,"CRSDepTime"
-,"OriginAirportID"
-,"OriginCityName"
-,"OriginStateName"
-,"DestAirportID"
-,"DestCityName"
-,"DestStateName"
-,"CRSArrTime"
 ,"Distance"
 ,"ArrDelayMinutes"
 ,"Cancelled"
 ,"Diverted"]
+
+COLUMN_NAMES_PART_PROCESSED = [
+'y_2018',
+'y_2019',
+'y_2020',
+'y_2021',
+'y_2022',
+'dist_scaled',
+'sin_dow',
+'cos_dow',
+'sin_dom',
+'cos_dom',
+'sin_month',
+'cos_month',
+'sin_qua',
+'cos_qua',
+'sin_dep',
+'cos_dep',
+'sin_arr',
+'cos_arr',
+'Marketing_Airline_Network',
+'Origin',
+'Dest',
+'y'
+]
 
 COLUMN_NAMES_PROCESSED = ['y_2018', 'y_2019','y_2020', 'y_2021', 'y_2022',
 'dist_scaled',

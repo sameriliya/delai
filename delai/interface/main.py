@@ -111,6 +111,7 @@ def train():
             break
 
         # Encode the chunk with all the columns (pd.concat with dummy df)
+        print(data_processed_chunk.head())
         encoded_df = return_dummies_df(data_processed_chunk)
         df_tot = pd.DataFrame(columns = COLUMN_NAMES_PROCESSED)
         df_concat = pd.concat([df_tot,encoded_df]).fillna(0)
@@ -233,6 +234,9 @@ def evaluate():
     print(df_X.columns)
     #Continue with same logic as taxifare
     model = load_model()
+    if model == None:
+        print('No model, stopping Evaluate')
+        return
 
     metrics_dict = evaluate_model(model=model, X=X_new, y=y_new)
     acc = metrics_dict["accuracy"] #using accuracy here as classification
@@ -252,7 +256,7 @@ def evaluate():
 
     return acc
 
-def pred(flight_number='UAL3519', date=datetime.date.today()) -> np.ndarray:
+def pred(flight_number='DAL383', date=datetime.date.today()) -> np.ndarray:
     """
     Make a prediction using the latest trained model
     """
@@ -274,6 +278,7 @@ def pred(flight_number='UAL3519', date=datetime.date.today()) -> np.ndarray:
     # Create X and y as numpy arrays
     X_new = df_concat.drop(columns=['y','Origin','Dest','Marketing_Airline_Network'])
     print(X_new)
+    X_new.to_csv('raw_data/x_new_test.csv', index = False)
     model = load_model()
     y_pred = model.predict(X_new.to_numpy())
 
@@ -283,8 +288,8 @@ def pred(flight_number='UAL3519', date=datetime.date.today()) -> np.ndarray:
 
 if __name__ == '__main__':
     #test preprocess function
-    #preprocess()
-    #preprocess(source_type = 'val_subset')
-    train()
-    #evaluate()
-    #pred()
+    # preprocess()
+    # preprocess(source_type = 'val_subset')
+    # train()
+    evaluate()
+    pred()
