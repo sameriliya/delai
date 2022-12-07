@@ -1,6 +1,6 @@
 from delai.data.local_disk import (get_pandas_chunk, save_pandas_chunk)
 from delai.data.big_query import (get_bq_chunk, save_bq_chunk)
-from delai.ml_logic.params import (COLUMN_NAMES_RAW)
+from delai.ml_logic.params import (COLUMN_NAMES_RAW, COLUMN_NAMES_PART_PROCESSED)
 import os
 import pandas as pd
 
@@ -14,7 +14,7 @@ def get_chunk(source_name: str,
     and do not consider them as part of the data `index` count.
     """
     if "processed" in source_name:
-        columns = None
+        columns = COLUMN_NAMES_PART_PROCESSED
     else:
         columns = COLUMN_NAMES_RAW
 

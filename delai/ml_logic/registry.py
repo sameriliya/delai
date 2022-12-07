@@ -1,6 +1,7 @@
 from delai.ml_logic.params import LOCAL_REGISTRY_PATH
 
 import mlflow
+import mlflow.keras
 from mlflow.tracking import MlflowClient
 
 import glob
