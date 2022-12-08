@@ -115,8 +115,8 @@ def train():
 
     # model params
     learning_rate = 0.001
-    batch_size = 256
-    patience = 2
+    batch_size = 32
+    patience = 10
 
     # iterate on the full dataset per chunks
     chunk_id = 0
