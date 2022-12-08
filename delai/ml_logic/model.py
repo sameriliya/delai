@@ -6,6 +6,7 @@ from typing import Tuple
 import pandas as pd
 import numpy as np
 
+
 def initialize_model(X):
     '''Initialize the model and return model variable'''
     reg_l1_l2 = regularizers.l1_l2(l1=0.005, l2=0.005)

@@ -87,6 +87,7 @@ def train():
     from delai.ml_logic.model import (initialize_model, compile_model, train_model)
     from tensorflow import convert_to_tensor, float32, int64
     from delai.ml_logic.registry import save_model, load_model, get_model_version
+    from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
 
     # load a validation set common to all chunks, used to early stop model training
     data_val_processed = get_chunk(
@@ -217,14 +218,7 @@ def train():
 
     print('Completed model training process!')
 
-
     return val_accuracy
-
-#     # From model.py import initialize compile train
-
-#     # Loop back, grab
-#     # Save model to the cloud (including params)
-#     pass
 
 def evaluate():
     """
@@ -236,6 +230,8 @@ def evaluate():
     from delai.ml_logic.registry import load_model, save_model
     from delai.ml_logic.registry import get_model_version
     from tensorflow import convert_to_tensor, float32, int64
+    from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
+
 
     # load new data
     new_data = get_chunk(source_name=f"val_subset_processed_{DATASET_SIZE}",
@@ -265,8 +261,19 @@ def evaluate():
         print('No model, stopping Evaluate')
         return
 
-    metrics_dict = evaluate_model(model=model, X=X_new, y=y_new)
-    acc = metrics_dict["accuracy"] #using accuracy here as classification
+    # metrics_dict = evaluate_model(model=model, X=X_new, y=y_new)
+    y_pred = model.predict(X_new)
+    pd.DataFrame(y_pred).to_csv('raw_data/y_pred_unrounded.csv', index = False)
+    y_pred = np.round(y_pred).astype(int)
+    pd.DataFrame(y_pred).to_csv('raw_data/y_pred_rounded.csv', index = False)
+    pd.DataFrame(y_new).to_csv('raw_data/y_actual.csv', index = False)
+
+    acc_man = round(accuracy_score(y_new, y_pred), 3)
+    prec_man = round(precision_score(y_new, y_pred), 3)
+    rec_man = round(recall_score(y_new, y_pred), 3)
+    f1_man = round(f1_score(y_new, y_pred), 3)
+
+    # acc = metrics_dict["accuracy"] #using accuracy here as classification
 
     # save evaluation
     params = dict(
@@ -279,9 +286,13 @@ def evaluate():
         val_set_size=VALIDATION_DATASET_SIZE,
         row_count=len(X_new))
 
-    save_model(params=params, metrics=dict(accuracy=acc))
-
-    return acc
+    save_model(params=params, metrics=dict(#accuracy=acc,
+                                           acc_man=acc_man,
+                                           precision=prec_man,
+                                           recall = rec_man,
+                                           f1 =f1_man))
+    print('New metrics:', acc_man, prec_man, rec_man, f1_man)
+    return f1_man
 
 def pred(flight_number='DAL383', date=datetime.date.today()) -> np.ndarray:
     """
@@ -317,6 +328,6 @@ if __name__ == '__main__':
     #test preprocess function
     #preprocess()
     #preprocess(source_type = 'val_subset')
-    train()
+    # train()
     evaluate()
     #pred()
