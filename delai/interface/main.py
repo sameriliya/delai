@@ -127,7 +127,7 @@ def train():
     # Grab chunk of processed data (without encoded data)
     while (True):
         print(f'Starting to train chunk {chunk_id}')
-        data_processed_chunk = get_chunk(source_name=f"train_subset_processed_{DATASET_SIZE}",
+        data_processed_chunk = get_chunk(source_name=f"train_subset_balanced_processed_{DATASET_SIZE}",
                                          index=chunk_id * CHUNK_SIZE,
                                          chunk_size=CHUNK_SIZE)
 
@@ -327,6 +327,7 @@ if __name__ == '__main__':
     #test preprocess function
     #preprocess()
     #preprocess(source_type = 'val_subset')
+    # preprocess(source_type = 'train_subset_balanced')
     train()
     # evaluate()
     #pred()
