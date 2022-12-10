@@ -56,3 +56,6 @@ pypi:
 
 run_test_flightaware:
 	python -c 'from delai.api.flightaware import test_flightaware_functions; test_flightaware_functions()'
+
+run_api:
+	uvicorn delai.api.fast:app --reload
