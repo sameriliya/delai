@@ -333,6 +333,6 @@ if __name__ == '__main__':
     #preprocess()
     #preprocess(source_type = 'val_subset')
     # preprocess(source_type = 'train_subset_balanced')
-    train()
+    train(bal_data=True)
     # evaluate()
     #pred()
