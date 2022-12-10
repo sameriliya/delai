@@ -126,7 +126,7 @@ def train():
 
     # Grab chunk of processed data (without encoded data)
     while (True):
-        print('starting loop')
+        print(f'Starting to train chunk {chunk_id}')
         data_processed_chunk = get_chunk(source_name=f"train_subset_processed_{DATASET_SIZE}",
                                          index=chunk_id * CHUNK_SIZE,
                                          chunk_size=CHUNK_SIZE)
@@ -316,7 +316,6 @@ def pred(flight_number='DAL383', date=datetime.date.today()) -> np.ndarray:
     # Create X and y as numpy arrays
     X_new = df_concat.drop(columns=['y','Origin','Dest','Marketing_Airline_Network'])
     print(X_new)
-    X_new.to_csv('raw_data/x_new_test.csv', index = False)
     model = load_model()
     y_pred = model.predict(X_new.to_numpy())
 
@@ -328,6 +327,6 @@ if __name__ == '__main__':
     #test preprocess function
     #preprocess()
     #preprocess(source_type = 'val_subset')
-    # train()
-    evaluate()
+    train()
+    # evaluate()
     #pred()
