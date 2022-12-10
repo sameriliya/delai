@@ -79,7 +79,7 @@ def preprocess(source_type='train_subset'):
 
     return None
 
-def train():
+def train(bal_data=False):
     """Train model chunk by chunk. Either to MLFlow or Locally.
     Will check for existing model in production on MLFlow and try to update weights
     if calling on training again"""
@@ -124,10 +124,15 @@ def train():
     row_count = 0
     metrics_val_list = []
 
+    if bal_data == True:
+        source_name_root = 'train_subset_balanced_processed_'
+    else:
+        source_name_root = 'train_subset_processed_'
+
     # Grab chunk of processed data (without encoded data)
     while (True):
         print(f'Starting to train chunk {chunk_id}')
-        data_processed_chunk = get_chunk(source_name=f"train_subset_balanced_processed_{DATASET_SIZE}",
+        data_processed_chunk = get_chunk(source_name=f"{source_name_root}{DATASET_SIZE}",
                                          index=chunk_id * CHUNK_SIZE,
                                          chunk_size=CHUNK_SIZE)
 
