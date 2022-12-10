@@ -8,16 +8,20 @@ import numpy as np
 
 def initialize_model(X):
     '''Initialize the model and return model variable'''
-    reg_l1_l2 = regularizers.l1_l2(l1=0.005, l2=0.005)
+    reg = regularizers.l1_l2(l2=0.01)
 
     model = Sequential()
-    model.add(layers.Dense(64, activation='relu', input_shape=X.shape[1:]))
+    model.add(layers.BatchNormalization(input_shape=X.shape[1:]))
+    model.add(layers.Dense(100, activation="relu", kernel_regularizer=reg, input_shape=X.shape[1:]))
+    model.add(layers.BatchNormalization())
 
-    model.add(layers.Dense(32, activation='relu', kernel_regularizer=reg_l1_l2))
+    model.add(layers.Dense(50, activation="relu", kernel_regularizer=reg))
+    model.add(layers.BatchNormalization())
 
-    model.add(layers.Dense(16, activation='relu', kernel_regularizer=reg_l1_l2))
+    model.add(layers.Dense(10, activation="relu"))
+    model.add(layers.BatchNormalization(momentum=0.99))
+    model.add(layers.Dense(1, activation="sigmoid"))
 
-    model.add(layers.Dense(1, activation='sigmoid'))
     return model
 
 def compile_model(model):
