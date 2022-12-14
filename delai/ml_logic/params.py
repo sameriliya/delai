@@ -850,7 +850,7 @@ COLUMN_NAMES_PROCESSED = ['y_2018', 'y_2019','y_2020', 'y_2021', 'y_2022',
 ################## VALIDATIONS #################
 
 env_valid_options = dict(
-    DATASET_SIZE=["1k", "10k", "100k", "500k", "50M", "new", "full","5m", "6m","14m", "3m"],
+    DATASET_SIZE=["1k", "10k", "100k","200k", "500k", "50M", "new", "full","5m", "6m","14m", "3m", "2m"],
     VALIDATION_DATASET_SIZE=["1k", "10k", "100k", "500k", "500k", "new", "full", "6m"],
     DATA_SOURCE=["local", "big query"],
     MODEL_TARGET=["local", "gcs", "mlflow"],

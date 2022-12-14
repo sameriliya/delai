@@ -225,7 +225,7 @@ def train(bal_data=False):
 
     return val_accuracy
 
-def evaluate():
+def evaluate(only_21_22 = False):
     """
     Evaluate the performance of the latest production model on new data
     """
@@ -239,7 +239,13 @@ def evaluate():
 
 
     # load new data
-    new_data = get_chunk(source_name=f"val_subset_processed_{DATASET_SIZE}",
+    # placeholder if we need to treat 2021/22 data only datasets
+    if only_21_22:
+        new_data = get_chunk(source_name=f"val_subset_processed_{DATASET_SIZE}",
+                         index=0,
+                         chunk_size=None)  # retrieve all further data
+    else:
+        new_data = get_chunk(source_name=f"val_subset_processed_{DATASET_SIZE}",
                          index=0,
                          chunk_size=None)  # retrieve all further data
 
@@ -331,8 +337,8 @@ def pred(flight_number='DAL383', date=datetime.date.today()) -> np.ndarray:
 if __name__ == '__main__':
     #test preprocess function
     #preprocess()
-    #preprocess(source_type = 'val_subset')
-    # preprocess(source_type = 'train_subset_balanced')
-    train(bal_data=False)
-    # evaluate()
+    # preprocess(source_type = 'val_subset')
+    #preprocess(source_type = 'train_subset_balanced')
+    # train(bal_data=False)
+    evaluate()
     #pred()
